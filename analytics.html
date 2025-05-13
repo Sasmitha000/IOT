@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <ul class="menu">
+        <li class="active">
+          <a href="dashboard.html">
+            <span class="icon"></span> Dashboard
+          </a>
+        </li>
+        <li>
+          <a href="defect-logs.html">
+            <span class="icon">📁</span> Defects Log
+          </a>
+        </li>
+        <li>
+          <a href="defect-gallery.html">
+            <span class="icon">📷</span> Defects Gallery
+          </a>
+        </li>
+        <li>
+          <a href="analytics.html">
+            <span class="icon">📈</span> Analytics
+          </a>
+        </li>
+        <li>
+          <a href="settings.html">
+            <span class="icon">⚙️</span> Settings
+          </a>
+        </li>
+      </ul>
+      
+      <div class="logout">← Log Out</div>
+    </div>
+
+        <!-- Main Content -->
+        <div class="main">
+          <div class="top-row">
+            <!-- Pie Chart Card -->
+            <div class="card pie-card">
+              <h3>Non-Defects and Defects Ratio</h3>
+              <div class="filter">
+                <select>
+                  <option>April</option>
+                </select>
+              </div>
+              <div class="chart">
+                <div class="pie">
+                  <div class="pie-slice"></div>
+                  <div class="pie-label">24%</div>
+                  <div class="pie-label pie-label-bottom">76%</div>
+                </div>
+              </div>
+              <div class="legend">
+                <div class="legend-item"><div class="legend-color Non-Defects"></div>Non-Defects</div>
+                <div class="legend-item"><div class="legend-color Defects"></div>Defects</div>
+              </div>
+            </div>
+          </div>
+    
+          <!-- Line Chart Placeholder -->
+          <div class="card line-chart">
+            <h4>Defects vs. Non-Defects</h4>
+            <div class="line-placeholder">[Line Chart Here]</div>
+          </div>
+        </div>
+      </div>
+
+
+  </body>
+  </html>
