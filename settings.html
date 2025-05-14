@@ -3,15 +3,50 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard</title>
+    <title>Settings - Automated Defect Detection</title>
     <link rel="stylesheet" href="dashboard.css" />
+    <style>
+      .settings-card {
+        padding: 20px;
+      }
+
+      .settings-section {
+        margin-bottom: 30px;
+      }
+
+      .settings-section h3 {
+        margin-top: 0;
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 10px;
+      }
+
+      .settings-option {
+        margin: 15px 0;
+      }
+
+      .settings-button {
+        background-color: #333;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 5px;
+      }
+
+      .settings-button:hover {
+        background-color: #444;
+      }
+    </style>
   </head>
   <body>
     <div class="dashboard">
       <!-- Sidebar -->
       <div class="sidebar">
         <ul class="menu">
-          <li class="active">
+          <li>
             <a href="dashboard.html"> <span class="icon"></span> Dashboard </a>
           </li>
           <li>
@@ -29,7 +64,7 @@
               <span class="icon">📈</span> Analytics
             </a>
           </li>
-          <li>
+          <li class="active">
             <a href="settings.html"> <span class="icon">⚙️</span> Settings </a>
           </li>
         </ul>
@@ -39,10 +74,32 @@
 
       <!-- Main Content -->
       <div class="main">
-        <div class="top-row">
-          <!-- Table Card -->
-          <div class="card table-card">
-            <h4>Settings</h4>
+        <div class="card settings-card">
+          <h2>Settings</h2>
+
+          <div class="settings-section">
+            <h3>User Management</h3>
+            <div class="settings-option">
+              <p>Add new users to the system</p>
+              <a href="/admin/add-user" class="settings-button">Add User</a>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>Defect Image Management</h3>
+            <div class="settings-option">
+              <p>Add new defect images from OneDrive</p>
+              <a href="/admin/add-defect-image" class="settings-button"
+                >Add Defect Images</a
+              >
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>System Settings</h3>
+            <div class="settings-option">
+              <p>Current Version: 1.0.0</p>
+            </div>
           </div>
         </div>
       </div>
