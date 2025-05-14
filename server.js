@@ -109,6 +109,13 @@ app.post(
   }
 );
 
+// Add this near your other admin routes
+
+// Admin page for adding defect images
+app.get("/admin/add-defect-image", ensureAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, "admin", "add-defect-image.html"));
+});
+
 // ---- SIMPLIFIED ONEDRIVE API ENDPOINTS ----
 
 // Get list of defect images
