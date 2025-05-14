@@ -1,0 +1,31 @@
+{
+  "name": "iot",
+  "version": "1.0.0",
+  "description": "Automated Defect Detection",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sasmitha000/IOT.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Sasmitha000/IOT/issues"
+  },
+  "homepage": "https://github.com/Sasmitha000/IOT#readme",
+  "dependencies": {
+    "@microsoft/microsoft-graph-client": "^3.0.7",
+    "bcryptjs": "^3.0.2",
+    "body-parser": "^2.2.0",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "express-session": "^1.18.1",
+    "isomorphic-fetch": "^3.0.0",
+    "mongoose": "^8.14.3",
+    "node-fetch": "^3.3.2"
+  }
+}

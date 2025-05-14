@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin • Add User</title>
+  <link rel="stylesheet" href="/add-user.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Admin: Add New User</h1>
+    <!-- show success / error if present -->
+    <script>
+      const p = new URLSearchParams(location.search);
+      if (p.get('success') === 'true') {
+        document.write('<p class="success">User added successfully!</p>');
+      } else if (p.get('error') === 'exists') {
+        document.write('<p class="error">Username already exists.</p>');
+      }
+    </script>
+
+<form action="http://localhost:3000/admin/add-user" method="POST">
+<label for="username">Username</label>
+  <input name="username" id="username" type="text" required />
+<label for="password">Password</label>
+  <input name="password" id="password" type="password" required />
+  <button type="submit">Create User</button>
+</form>
+
+    <p><a href="/dashboard.html">← Back to Dashboard</a></p>
+  </div>
+</body>
+</html>

@@ -17,12 +17,22 @@
     <!-- Yellow Gradient Line -->
     <div class="separator"></div>
 
+    <script>
+  const params = new URLSearchParams(location.search);
+  if (params.get('error') === 'invalid') {
+    document.write('<p class="error">Invalid username or password.</p>');
+  }
+  if (params.get('registered') === 'true') {
+    document.write('<p class="success">Registration successful! Please log in.</p>');
+  }
+</script>
+
     <!-- Login Form -->
-    <form>
+    <form action="/login" method="POST">
       <!-- Username -->
       <div class="form-group">
         <label for="username">Username</label>
-        <input type="text" id="username" placeholder="Username" />
+        <input type="text" id="username" name="username" placeholder="Username" required />
       </div>
 
       <!-- Password -->
@@ -31,7 +41,7 @@
           <label for="password">Password</label>
           <a href="#">Forgot?</a>
         </div>
-        <input type="password" id="password" placeholder="Password" />
+        <input type="password" id="password" name="password" placeholder="Password" required />
       </div>
 
       <!-- Login Button -->

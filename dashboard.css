@@ -295,3 +295,31 @@ body {
     gap: 10px;
   }
 }
+
+/* Add these styles to your existing CSS file */
+
+.defect-thumbnail {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.defect-thumbnail:hover {
+  transform: scale(1.1);
+}
+
+.loading-indicator {
+  margin: 10px 0;
+  font-style: italic;
+  color: #666;
+  text-align: center;
+}
+
+/* Make the table cells vertically aligned */
+.table-card td {
+  vertical-align: middle;
+}
