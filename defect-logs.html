@@ -1,71 +1,294 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="dashboard.css" />
-</head>
-<body>
-  <div class="dashboard">
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <ul class="menu">
-        <li class="active">
-          <a href="dashboard.html">
-            <span class="icon"></span> Dashboard
-          </a>
-        </li>
-        <li>
-          <a href="defect-logs.html">
-            <span class="icon">📁</span> Defects Log
-          </a>
-        </li>
-        <li>
-          <a href="defect-gallery.html">
-            <span class="icon">📷</span> Defects Gallery
-          </a>
-        </li>
-        <li>
-          <a href="analytics.html">
-            <span class="icon">📈</span> Analytics
-          </a>
-        </li>
-        <li>
-          <a href="settings.html">
-            <span class="icon">⚙️</span> Settings
-          </a>
-        </li>
-      </ul>
-      
-      <div class="logout">← Log Out</div>
-    </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Defect Logs - Automated Defect Detection</title>
+    <link rel="stylesheet" href="dashboard.css" />
+    <style>
+      .loading-indicator {
+        text-align: center;
+        padding: 20px;
+        font-style: italic;
+        color: #666;
+      }
 
-        <!-- Main Content -->
-        <div class="main">
-          <div class="top-row">
-    
-            <!-- Table Card -->
-            <div class="card table-card">
+      .defect-thumbnail {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #e0e0e0;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+      }
+
+      .defect-thumbnail:hover {
+        transform: scale(1.5);
+      }
+
+      .image-viewer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .image-viewer img {
+        max-width: 90%;
+        max-height: 90%;
+        object-fit: contain;
+      }
+
+      .image-viewer .close-button {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+      }
+
+      .header-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .refresh-button {
+        background-color: #333;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .refresh-button:hover {
+        background-color: #444;
+      }
+
+      .refresh-icon {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        border-top-color: transparent;
+        margin-right: 5px;
+      }
+
+      .refresh-button.loading .refresh-icon {
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <ul class="menu">
+          <li>
+            <a href="dashboard.html"> <span class="icon"></span> Dashboard </a>
+          </li>
+          <li class="active">
+            <a href="defect-logs.html">
+              <span class="icon">📁</span> Defects Log
+            </a>
+          </li>
+          <li>
+            <a href="defect-gallery.html">
+              <span class="icon">📷</span> Defects Gallery
+            </a>
+          </li>
+          <li>
+            <a href="analytics.html">
+              <span class="icon">📈</span> Analytics
+            </a>
+          </li>
+          <li>
+            <a href="settings.html"> <span class="icon">⚙️</span> Settings </a>
+          </li>
+        </ul>
+
+        <div class="logout">← Log Out</div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main">
+        <div class="top-row">
+          <!-- defect Table Card -->
+          <div class="defect table-card">
+            <div class="header-actions">
               <h4>Recent Defects Log</h4>
-              <table>
-                <thead>
-                  <tr><th>Img ID</th><th>Date</th><th>Time</th><th>Confidence Rate</th></tr>
-                </thead>
-                <tbody>
-                  <tr><td>Defective_77.png</td><td>24/07</td><td>14:22</td><td>0.9966</td></tr>
-                  <tr><td>Defective_78.png</td><td>24/07</td><td>14:22</td><td>0.9911</td></tr>
-                  <tr><td>Defective_79.png</td><td>24/07</td><td>14:22</td><td>0.8467</td></tr>
-                  <tr><td>Defective_80.png</td><td>24/07</td><td>14:22</td><td>1</td></tr>
-                  <tr><td>Defective_81.png</td><td>24/07</td><td>14:23</td><td>0.9829</td></tr>
-                  <tr><td>Defective_82.png</td><td>24/07</td><td>14:23</td><td>0.9012</td></tr>
-                  <tr><td>Defective_83.png</td><td>24/07</td><td>14:23</td><td>0.9999</td></tr>
-                </tbody>
-              </table>
+              <button
+                id="refresh-button"
+                class="refresh-button"
+                onclick="refreshImages()"
+              >
+                <span class="refresh-icon"></span>
+                Refresh Images
+              </button>
             </div>
+            <div id="loading-indicator" class="loading-indicator">
+              Loading defect images...
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Image</th>
+                  <th>Img ID</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Confidence Rate</th>
+                </tr>
+              </thead>
+              <tbody id="defect-logs-tbody">
+                <!-- Images will be loaded here dynamically -->
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
+    </div>
 
+    <!-- Image Viewer Modal -->
+    <div id="image-viewer" class="image-viewer">
+      <div class="close-button" onclick="closeImageViewer()">✕</div>
+      <img id="full-image" src="" alt="Defect Image" />
+    </div>
+
+    <script>
+      // Fetch defect images when the page loads
+      document.addEventListener("DOMContentLoaded", fetchDefectImages);
+
+      async function fetchDefectImages() {
+        const loadingIndicator = document.getElementById("loading-indicator");
+        const tbody = document.getElementById("defect-logs-tbody");
+
+        try {
+          loadingIndicator.style.display = "block";
+
+          // Call our backend API to get the defect images
+          const response = await fetch("/api/defect-images");
+          if (!response.ok) {
+            throw new Error("Failed to fetch images");
+          }
+
+          const data = await response.json();
+
+          // Clear the table body
+          tbody.innerHTML = "";
+
+          // Add each image to the table
+          if (data.images && data.images.length > 0) {
+            data.images.forEach((image) => {
+              const row = document.createElement("tr");
+              row.innerHTML = `
+                <td>
+                  <img 
+                    src="${image.thumbnailUrl}" 
+                    alt="${image.name}"
+                    class="defect-thumbnail"
+                    onclick="showFullImage('${image.downloadUrl}')"
+                  >
+                </td>
+                <td>${image.name}</td>
+                <td>${image.date}</td>
+                <td>${image.time}</td>
+                <td>${image.confidenceRate}</td>
+              `;
+              tbody.appendChild(row);
+            });
+          } else {
+            tbody.innerHTML =
+              '<tr><td colspan="5" style="text-align: center;">No defect images found</td></tr>';
+          }
+        } catch (error) {
+          console.error("Error fetching defect images:", error);
+          tbody.innerHTML =
+            '<tr><td colspan="5" style="text-align: center;">Failed to load images</td></tr>';
+        } finally {
+          loadingIndicator.style.display = "none";
+        }
+      }
+
+      // Force refresh images from OneDrive
+      async function refreshImages() {
+        const refreshButton = document.getElementById("refresh-button");
+
+        try {
+          // Show loading state
+          refreshButton.classList.add("loading");
+          refreshButton.disabled = true;
+
+          // First clear the server cache
+          const clearResponse = await fetch("/api/defect-images/refresh", {
+            method: "POST",
+          });
+
+          if (!clearResponse.ok) {
+            throw new Error("Failed to refresh image cache");
+          }
+
+          // Then fetch the images again
+          await fetchDefectImages();
+        } catch (error) {
+          console.error("Error refreshing images:", error);
+          alert("Failed to refresh images from OneDrive");
+        } finally {
+          // Reset button state
+          refreshButton.classList.remove("loading");
+          refreshButton.disabled = false;
+        }
+      }
+
+      // Show full-size image in modal
+      function showFullImage(imageUrl) {
+        const imageViewer = document.getElementById("image-viewer");
+        const fullImage = document.getElementById("full-image");
+
+        fullImage.src = imageUrl;
+        imageViewer.style.display = "flex";
+
+        // Prevent scrolling of the background
+        document.body.style.overflow = "hidden";
+      }
+
+      // Close image viewer
+      function closeImageViewer() {
+        const imageViewer = document.getElementById("image-viewer");
+        imageViewer.style.display = "none";
+
+        // Re-enable scrolling
+        document.body.style.overflow = "auto";
+      }
+
+      // Close viewer when clicking outside the image
+      document
+        .getElementById("image-viewer")
+        .addEventListener("click", function (event) {
+          if (event.target === this) {
+            closeImageViewer();
+          }
+        });
+    </script>
   </body>
-  </html>
+</html>

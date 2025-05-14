@@ -11,6 +11,9 @@ const User = require("./models/LoginUser");
 // Use our simple OneDrive service instead
 const simpleOneDriveService = require("./services/simpleOneDriveService");
 
+// Import the folder service
+const oneDriveFolderService = require("./services/oneDriveFolderService");
+
 const app = express();
 
 // Connect to MongoDB
@@ -116,22 +119,23 @@ app.get("/admin/add-defect-image", ensureAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, "admin", "add-defect-image.html"));
 });
 
-// ---- SIMPLIFIED ONEDRIVE API ENDPOINTS ----
+// ---- DIRECT ONEDRIVE FOLDER API ENDPOINTS ----
 
 // Get list of defect images
 app.get("/api/defect-images", async (req, res) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit) : 20;
-    const images = await simpleOneDriveService.getDefectImages(limit);
+
+    // Get images directly from OneDrive folder
+    const images = await oneDriveFolderService.getImagesFromFolder();
 
     // Transform the data for the frontend
-    const formattedImages = images.map((image) => ({
+    const formattedImages = images.slice(0, limit).map((image) => ({
       id: image.id,
       name: image.name,
       date: image.date,
       time: image.time,
       confidenceRate: image.confidenceRate,
-      // The URL to fetch the actual image content through our proxy
       thumbnailUrl: `/api/defect-images/${image.id}/content`,
       downloadUrl: `/api/defect-images/${image.id}/content`,
     }));
@@ -139,7 +143,9 @@ app.get("/api/defect-images", async (req, res) => {
     res.json({ images: formattedImages });
   } catch (error) {
     console.error("Error fetching defect images:", error);
-    res.status(500).json({ error: "Failed to fetch images from OneDrive" });
+    res
+      .status(500)
+      .json({ error: "Failed to fetch images from OneDrive folder" });
   }
 });
 
@@ -147,9 +153,7 @@ app.get("/api/defect-images", async (req, res) => {
 app.get("/api/defect-images/:id/content", async (req, res) => {
   try {
     const fileId = req.params.id;
-    const fileContent = await simpleOneDriveService.getDefectImageContent(
-      fileId
-    );
+    const fileContent = await oneDriveFolderService.getImageContent(fileId);
 
     res.setHeader("Content-Type", fileContent.contentType);
     res.setHeader(
@@ -163,45 +167,16 @@ app.get("/api/defect-images/:id/content", async (req, res) => {
   }
 });
 
-// For development: Add a new image to the OneDrive links collection
+// Force refresh of the image cache
 app.post(
-  "/api/defect-images",
-  /* ensureAdmin, */ async (req, res) => {
+  "/api/defect-images/refresh",
+  /* ensureAdmin, */ (req, res) => {
     try {
-      const newImage = req.body;
-
-      // Validate image data
-      if (!newImage.name || !newImage.url) {
-        return res.status(400).json({ error: "Missing required fields" });
-      }
-
-      // Generate an ID if not provided
-      if (!newImage.id) {
-        newImage.id = `image${Date.now()}`;
-      }
-
-      // Add timestamp if not provided
-      if (!newImage.date || !newImage.time) {
-        const now = new Date();
-        newImage.date = `${now.getDate()}/${now.getMonth() + 1}`;
-        newImage.time = `${now.getHours()}:${String(now.getMinutes()).padStart(
-          2,
-          "0"
-        )}`;
-      }
-
-      // Add a default confidence rate if not provided
-      if (!newImage.confidenceRate) {
-        newImage.confidenceRate = parseFloat(
-          (0.8 + Math.random() * 0.19).toFixed(4)
-        );
-      }
-
-      const result = await simpleOneDriveService.addDefectImage(newImage);
-      res.status(201).json(result);
+      oneDriveFolderService.clearCache();
+      res.json({ success: true, message: "Cache cleared successfully" });
     } catch (error) {
-      console.error("Error adding image:", error);
-      res.status(500).json({ error: "Failed to add image" });
+      console.error("Error clearing cache:", error);
+      res.status(500).json({ error: "Failed to clear cache" });
     }
   }
 );
@@ -230,8 +205,8 @@ if (!fs.existsSync(imagesJsonPath)) {
         date: "15/5",
         time: "10:30",
         confidenceRate: 0.9876,
-        // This is a sample image URL - replace with your actual OneDrive shared URL
-        url: "https://picsum.photos/200",
+        //  OneDrive shared URL
+        url: "https://liveplymouthac-my.sharepoint.com/:f:/g/personal/10953555_students_plymouth_ac_uk/EqKnr8Y2G5NOksyvy8ti5Q0B_KXL0-HAaFR2EDwxAMD1fA?e=rKMTfy",
       },
     ],
   };
