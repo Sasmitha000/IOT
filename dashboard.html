@@ -5,6 +5,154 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard - Automated Defect Detection</title>
     <link rel="stylesheet" href="dashboard.css" />
+    <!-- Add Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      /* Defect thumbnail styling */
+      .defect-thumbnail {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #e0e0e0;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+      }
+
+      .defect-thumbnail:hover {
+        transform: scale(1.5);
+      }
+
+      /* Image viewer modal */
+      .image-viewer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .image-viewer img {
+        max-width: 90%;
+        max-height: 90%;
+        object-fit: contain;
+      }
+
+      .image-viewer .close-button {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+      }
+
+      /* Loading indicator */
+      .loading-indicator {
+        text-align: center;
+        padding: 10px;
+        font-style: italic;
+        color: #666;
+        font-size: 0.9rem;
+      }
+
+      /* Chart container styling */
+      .chart-container {
+        height: 220px;
+        position: relative;
+      }
+
+      /* Dashboard summary cards */
+      .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .summary-card {
+        background-color: white;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .summary-card h3 {
+        margin: 0;
+        font-size: 1rem;
+        color: #666;
+      }
+
+      .summary-card .value {
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin: 10px 0;
+      }
+
+      .summary-card .trend {
+        font-size: 0.8rem;
+      }
+
+      .trend.up {
+        color: #ff0000; /* Red for increasing defects (negative) */
+      }
+
+      .trend.down {
+        color: #017b01; /* Green for decreasing defects (positive) */
+      }
+
+      /* Update refresh button styling */
+      .refresh-button {
+        background-color: #333;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .refresh-button:hover {
+        background-color: #444;
+      }
+
+      .refresh-icon {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        border-top-color: transparent;
+        margin-right: 5px;
+      }
+
+      .refresh-button.loading .refresh-icon {
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Header actions */
+      .header-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+    </style>
   </head>
   <body>
     <div class="dashboard">
@@ -38,21 +186,45 @@
 
       <!-- Main Content -->
       <div class="main">
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+          <div class="summary-card">
+            <h3>Total Defects</h3>
+            <div class="value" id="total-defects">287</div>
+            <div class="trend up">↑ 12% from last month</div>
+          </div>
+          <div class="summary-card">
+            <h3>Today's Defects</h3>
+            <div class="value" id="today-defects">24</div>
+            <div class="trend up">↑ 4 from yesterday</div>
+          </div>
+          <div class="summary-card">
+            <h3>Average Confidence</h3>
+            <div class="value" id="avg-confidence">94.3%</div>
+            <div class="trend">↔ No change</div>
+          </div>
+          <div class="summary-card">
+            <h3>Defect Rate</h3>
+            <div class="value" id="defect-rate">24%</div>
+            <div class="trend down">↓ 2% from last week</div>
+          </div>
+        </div>
+
         <div class="top-row">
           <!-- Pie Chart Card -->
           <div class="card pie-card">
-            <h3>Non-Defects and Defects Ratio</h3>
-            <div class="filter">
-              <select>
-                <option>April</option>
-              </select>
-            </div>
-            <div class="chart">
-              <div class="pie">
-                <div class="pie-slice"></div>
-                <div class="pie-label">24%</div>
-                <div class="pie-label pie-label-bottom">76%</div>
+            <div class="header-actions">
+              <h3>Non-Defects and Defects Ratio</h3>
+              <div class="filter">
+                <select id="pieChartMonthSelector" onchange="updatePieChart()">
+                  <option value="may" selected>May</option>
+                  <option value="april">April</option>
+                  <option value="march">March</option>
+                </select>
               </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="defectsRatioPieChart"></canvas>
             </div>
             <div class="legend">
               <div class="legend-item">
@@ -68,70 +240,410 @@
 
           <!-- Table Card -->
           <div class="card table-card">
-            <h4>Recent Defects Logs</h4>
+            <div class="header-actions">
+              <h4>Recent Defects Logs</h4>
+              <button
+                id="refresh-button"
+                class="refresh-button"
+                onclick="refreshImages()"
+              >
+                <span class="refresh-icon"></span>
+                Refresh
+              </button>
+            </div>
+            <div id="loading-indicator" class="loading-indicator">
+              Loading defect images...
+            </div>
             <table>
               <thead>
                 <tr>
+                  <th>Image</th>
                   <th>Img ID</th>
                   <th>Date</th>
                   <th>Time</th>
-                  <th>Confidence Rate</th>
+                  <th>Confidence</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td>Defective_77.png</td>
-                  <td>24/07</td>
-                  <td>14:22</td>
-                  <td>0.9966</td>
-                </tr>
-                <tr>
-                  <td>Defective_78.png</td>
-                  <td>24/07</td>
-                  <td>14:22</td>
-                  <td>0.9911</td>
-                </tr>
-                <tr>
-                  <td>Defective_79.png</td>
-                  <td>24/07</td>
-                  <td>14:22</td>
-                  <td>0.8467</td>
-                </tr>
-                <tr>
-                  <td>Defective_80.png</td>
-                  <td>24/07</td>
-                  <td>14:22</td>
-                  <td>1</td>
-                </tr>
-                <tr>
-                  <td>Defective_81.png</td>
-                  <td>24/07</td>
-                  <td>14:23</td>
-                  <td>0.9829</td>
-                </tr>
-                <tr>
-                  <td>Defective_82.png</td>
-                  <td>24/07</td>
-                  <td>14:23</td>
-                  <td>0.9012</td>
-                </tr>
-                <tr>
-                  <td>Defective_83.png</td>
-                  <td>24/07</td>
-                  <td>14:23</td>
-                  <td>0.9999</td>
-                </tr>
+              <tbody id="defect-logs-tbody">
+                <!-- Defect logs will be loaded here dynamically -->
               </tbody>
             </table>
           </div>
         </div>
 
-        <!-- Line Chart Placeholder -->
+        <!-- Line Chart -->
         <div class="card line-chart">
-          <h4>Defects vs. Non-Defects</h4>
-          <div class="line-placeholder">[Line Chart Here]</div>
+          <div class="header-actions">
+            <h4>Defects vs. Non-Defects</h4>
+            <div class="filter">
+              <select id="lineChartTimeSelector" onchange="updateLineChart()">
+                <option value="week" selected>Last Week</option>
+                <option value="month">Last Month</option>
+                <option value="quarter">Last Quarter</option>
+              </select>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="defectsLineChart"></canvas>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- Image Viewer Modal -->
+    <div id="image-viewer" class="image-viewer">
+      <div class="close-button" onclick="closeImageViewer()">✕</div>
+      <img id="full-image" src="" alt="Defect Image" />
+    </div>
+
+    <script>
+      // Sample data for charts (similar to analytics.html)
+      const chartData = {
+        may: {
+          defectsRatio: { defects: 24, nonDefects: 76 },
+          lineChartData: {
+            week: {
+              labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+              defects: [5, 8, 6, 9, 7, 4, 8],
+              nonDefects: [15, 12, 14, 18, 16, 9, 12],
+            },
+            month: {
+              labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+              defects: [25, 32, 28, 34],
+              nonDefects: [75, 68, 82, 66],
+            },
+            quarter: {
+              labels: ["Month 1", "Month 2", "Month 3"],
+              defects: [85, 92, 78],
+              nonDefects: [215, 208, 222],
+            },
+          },
+        },
+        april: {
+          defectsRatio: { defects: 18, nonDefects: 82 },
+          lineChartData: {
+            week: {
+              labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+              defects: [4, 5, 7, 6, 5, 3, 7],
+              nonDefects: [16, 15, 17, 18, 15, 10, 13],
+            },
+            month: {
+              labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+              defects: [22, 26, 18, 24],
+              nonDefects: [78, 74, 82, 76],
+            },
+            quarter: {
+              labels: ["Month 1", "Month 2", "Month 3"],
+              defects: [75, 80, 70],
+              nonDefects: [225, 220, 230],
+            },
+          },
+        },
+        march: {
+          defectsRatio: { defects: 21, nonDefects: 79 },
+          lineChartData: {
+            week: {
+              labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+              defects: [6, 7, 5, 8, 6, 4, 6],
+              nonDefects: [14, 13, 15, 12, 14, 10, 14],
+            },
+            month: {
+              labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+              defects: [24, 28, 21, 26],
+              nonDefects: [76, 72, 79, 74],
+            },
+            quarter: {
+              labels: ["Month 1", "Month 2", "Month 3"],
+              defects: [80, 85, 75],
+              nonDefects: [220, 215, 225],
+            },
+          },
+        },
+      };
+
+      // Initialize chart variables
+      let pieChart, lineChart;
+      let currentMonth = "may";
+      let currentTimeRange = "week";
+
+      // Initialize charts and fetch data when the page loads
+      document.addEventListener("DOMContentLoaded", function () {
+        initPieChart();
+        initLineChart();
+        fetchDefectImages();
+        updateSummaryCards();
+      });
+
+      // Initialize Pie Chart
+      function initPieChart() {
+        const ctx = document
+          .getElementById("defectsRatioPieChart")
+          .getContext("2d");
+
+        pieChart = new Chart(ctx, {
+          type: "pie",
+          data: {
+            labels: ["Non-Defects", "Defects"],
+            datasets: [
+              {
+                data: [
+                  chartData[currentMonth].defectsRatio.nonDefects,
+                  chartData[currentMonth].defectsRatio.defects,
+                ],
+                backgroundColor: [
+                  "rgb(1, 123, 1)", // Green for non-defects
+                  "#ff0000", // Red for defects
+                ],
+                borderColor: ["#ffffff", "#ffffff"],
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false,
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    const label = context.label || "";
+                    const value = context.raw || 0;
+                    return `${label}: ${value}%`;
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      // Initialize Line Chart
+      function initLineChart() {
+        const ctx = document
+          .getElementById("defectsLineChart")
+          .getContext("2d");
+
+        lineChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels:
+              chartData[currentMonth].lineChartData[currentTimeRange].labels,
+            datasets: [
+              {
+                label: "Defects",
+                data: chartData[currentMonth].lineChartData[currentTimeRange]
+                  .defects,
+                borderColor: "rgb(255, 99, 132)",
+                backgroundColor: "rgba(255, 99, 132, 0.2)",
+                tension: 0.1,
+                fill: true,
+              },
+              {
+                label: "Non-Defects",
+                data: chartData[currentMonth].lineChartData[currentTimeRange]
+                  .nonDefects,
+                borderColor: "rgb(1, 123, 1)",
+                backgroundColor: "rgba(1, 123, 1, 0.2)",
+                tension: 0.1,
+                fill: true,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "Number of Items",
+                },
+              },
+            },
+          },
+        });
+      }
+
+      // Update Pie Chart based on selected month
+      function updatePieChart() {
+        currentMonth = document.getElementById("pieChartMonthSelector").value;
+
+        pieChart.data.datasets[0].data = [
+          chartData[currentMonth].defectsRatio.nonDefects,
+          chartData[currentMonth].defectsRatio.defects,
+        ];
+
+        pieChart.update();
+
+        // Update the defect rate summary card
+        document.getElementById("defect-rate").textContent =
+          chartData[currentMonth].defectsRatio.defects + "%";
+
+        // Also update the line chart to match the selected month
+        updateLineChart();
+      }
+
+      // Update Line Chart
+      function updateLineChart() {
+        currentTimeRange = document.getElementById(
+          "lineChartTimeSelector"
+        ).value;
+
+        lineChart.data.labels =
+          chartData[currentMonth].lineChartData[currentTimeRange].labels;
+        lineChart.data.datasets[0].data =
+          chartData[currentMonth].lineChartData[currentTimeRange].defects;
+        lineChart.data.datasets[1].data =
+          chartData[currentMonth].lineChartData[currentTimeRange].nonDefects;
+
+        lineChart.update();
+      }
+
+      // Update summary cards with calculated values
+      function updateSummaryCards() {
+        // You could fetch these values from an API or calculate from real data
+        // For now we're just using sample values
+
+        const todayDefects = Math.floor(Math.random() * 10) + 20; // Random between 20-30
+        document.getElementById("today-defects").textContent = todayDefects;
+
+        const avgConfidence = (90 + Math.random() * 9).toFixed(1); // Random between 90-99%
+        document.getElementById("avg-confidence").textContent =
+          avgConfidence + "%";
+      }
+
+      // Fetch defect images (from defect-logs.html)
+      async function fetchDefectImages() {
+        const loadingIndicator = document.getElementById("loading-indicator");
+        const tbody = document.getElementById("defect-logs-tbody");
+
+        try {
+          loadingIndicator.style.display = "block";
+
+          // First try to get images from OneDrive
+          let response = await fetch("/api/defect-images");
+
+          // If that fails, use sample images
+          if (!response.ok) {
+            console.log("OneDrive fetch failed, using sample images instead");
+            response = await fetch("/api/sample-images");
+          }
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch images from both sources");
+          }
+
+          const data = await response.json();
+
+          // Clear the table body
+          tbody.innerHTML = "";
+
+          // Add each image to the table (limit to 5 for dashboard)
+          if (data.images && data.images.length > 0) {
+            // Take only the first 5 images for the dashboard
+            const dashboardImages = data.images.slice(0, 5);
+
+            // Update the "Total Defects" card with actual count
+            document.getElementById("total-defects").textContent =
+              data.images.length;
+
+            dashboardImages.forEach((image) => {
+              const row = document.createElement("tr");
+              row.innerHTML = `
+              <td>
+                <img 
+                  src="${image.thumbnailUrl}" 
+                  alt="${image.name}"
+                  class="defect-thumbnail"
+                  onclick="showFullImage('${image.downloadUrl}')"
+                >
+              </td>
+              <td>${image.name}</td>
+              <td>${image.date}</td>
+              <td>${image.time}</td>
+              <td>${image.confidenceRate.toFixed(4)}</td>
+            `;
+              tbody.appendChild(row);
+            });
+          } else {
+            tbody.innerHTML =
+              '<tr><td colspan="5" style="text-align: center;">No defect images found</td></tr>';
+          }
+        } catch (error) {
+          console.error("Error fetching defect images:", error);
+          tbody.innerHTML =
+            '<tr><td colspan="5" style="text-align: center;">Failed to load images</td></tr>';
+        } finally {
+          loadingIndicator.style.display = "none";
+        }
+      }
+
+      // Force refresh images
+      async function refreshImages() {
+        const refreshButton = document.getElementById("refresh-button");
+
+        try {
+          // Show loading state
+          refreshButton.classList.add("loading");
+          refreshButton.disabled = true;
+
+          // First clear the server cache
+          const clearResponse = await fetch("/api/defect-images/refresh", {
+            method: "POST",
+          });
+
+          if (!clearResponse.ok) {
+            throw new Error("Failed to refresh image cache");
+          }
+
+          // Then fetch the images again
+          await fetchDefectImages();
+
+          // Also update summary cards
+          updateSummaryCards();
+        } catch (error) {
+          console.error("Error refreshing images:", error);
+          alert("Failed to refresh images");
+        } finally {
+          // Reset button state
+          refreshButton.classList.remove("loading");
+          refreshButton.disabled = false;
+        }
+      }
+
+      // Show full-size image in modal
+      function showFullImage(imageUrl) {
+        const imageViewer = document.getElementById("image-viewer");
+        const fullImage = document.getElementById("full-image");
+
+        fullImage.src = imageUrl;
+        imageViewer.style.display = "flex";
+
+        // Prevent scrolling of the background
+        document.body.style.overflow = "hidden";
+      }
+
+      // Close image viewer
+      function closeImageViewer() {
+        const imageViewer = document.getElementById("image-viewer");
+        imageViewer.style.display = "none";
+
+        // Re-enable scrolling
+        document.body.style.overflow = "auto";
+      }
+
+      // Close viewer when clicking outside the image
+      document
+        .getElementById("image-viewer")
+        .addEventListener("click", function (event) {
+          if (event.target === this) {
+            closeImageViewer();
+          }
+        });
+    </script>
   </body>
 </html>
