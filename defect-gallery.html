@@ -1,58 +1,358 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="dashboard.css" />
-</head>
-<body>
-  <div class="dashboard">
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <ul class="menu">
-        <li class="active">
-          <a href="dashboard.html">
-            <span class="icon"></span> Dashboard
-          </a>
-        </li>
-        <li>
-          <a href="defect-logs.html">
-            <span class="icon">📁</span> Defects Log
-          </a>
-        </li>
-        <li>
-          <a href="defect-gallery.html">
-            <span class="icon">📷</span> Defects Gallery
-          </a>
-        </li>
-        <li>
-          <a href="analytics.html">
-            <span class="icon">📈</span> Analytics
-          </a>
-        </li>
-        <li>
-          <a href="settings.html">
-            <span class="icon">⚙️</span> Settings
-          </a>
-        </li>
-      </ul>
-      
-      <div class="logout">← Log Out</div>
-    </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Defect Gallery - Automated Defect Detection</title>
+    <link rel="stylesheet" href="dashboard.css" />
+    <style>
+      .loading-indicator {
+        text-align: center;
+        padding: 20px;
+        font-style: italic;
+        color: #666;
+      }
 
-        <!-- Main Content -->
-        <div class="main">
-          <div class="top-row">
-    
-            <!-- Table Card -->
-            <div class="card table-card">
-              <h4>Defects Gallery</h4>
+      .image-viewer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .image-viewer img {
+        max-width: 90%;
+        max-height: 90%;
+        object-fit: contain;
+      }
+
+      .image-viewer .close-button {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+      }
+
+      .header-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .refresh-button {
+        background-color: #333;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .refresh-button:hover {
+        background-color: #444;
+      }
+
+      .refresh-icon {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        border-top-color: transparent;
+        margin-right: 5px;
+      }
+
+      .refresh-button.loading .refresh-icon {
+        animation: spin 1s linear infinite;
+      }
+
+      /* New Gallery Grid Styles */
+      .gallery-container {
+        padding: 20px;
+      }
+
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        grid-gap: 20px;
+      }
+
+      .gallery-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .gallery-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+      }
+
+      .gallery-image {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        cursor: pointer;
+        display: block;
+      }
+
+      .gallery-info {
+        padding: 12px;
+      }
+
+      .gallery-info h4 {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .gallery-metadata {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #666;
+      }
+
+      .confidence-rate {
+        background-color: #f0f4f9;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-weight: bold;
+      }
+
+      .high-confidence {
+        color: #2e7d32;
+      }
+
+      .medium-confidence {
+        color: #f57c00;
+      }
+
+      .low-confidence {
+        color: #c62828;
+      }
+
+      .empty-gallery {
+        text-align: center;
+        padding: 40px;
+        font-style: italic;
+        color: #666;
+        grid-column: 1 / -1;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <ul class="menu">
+          <li>
+            <a href="dashboard.html"> <span class="icon"></span> Dashboard </a>
+          </li>
+          <li>
+            <a href="defect-logs.html">
+              <span class="icon">📁</span> Defects Log
+            </a>
+          </li>
+          <li class="active">
+            <a href="defect-gallery.html">
+              <span class="icon">📷</span> Defects Gallery
+            </a>
+          </li>
+          <li>
+            <a href="analytics.html">
+              <span class="icon">📈</span> Analytics
+            </a>
+          </li>
+          <li>
+            <a href="settings.html"> <span class="icon">⚙️</span> Settings </a>
+          </li>
+        </ul>
+
+        <div class="logout">← Log Out</div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main">
+        <div class="card">
+          <!-- Gallery Container -->
+          <div class="gallery-container">
+            <div class="header-actions">
+              <h3>Defects Gallery</h3>
+              <button
+                id="refresh-button"
+                class="refresh-button"
+                onclick="refreshImages()"
+              >
+                <span class="refresh-icon"></span>
+                Refresh Gallery
+              </button>
+            </div>
+            <div id="loading-indicator" class="loading-indicator">
+              Loading defect images...
+            </div>
+            <div id="gallery-grid" class="gallery-grid">
+              <!-- Images will be loaded here dynamically -->
             </div>
           </div>
         </div>
       </div>
+    </div>
 
+    <!-- Image Viewer Modal -->
+    <div id="image-viewer" class="image-viewer">
+      <div class="close-button" onclick="closeImageViewer()">✕</div>
+      <img id="full-image" src="" alt="Defect Image" />
+    </div>
 
+    <script>
+      // Fetch defect images when the page loads
+      document.addEventListener("DOMContentLoaded", fetchDefectImages);
+
+      async function fetchDefectImages() {
+        const loadingIndicator = document.getElementById("loading-indicator");
+        const galleryGrid = document.getElementById("gallery-grid");
+
+        try {
+          loadingIndicator.style.display = "block";
+          galleryGrid.innerHTML = "";
+
+          // Call our backend API to get the defect images
+          const response = await fetch("/api/defect-images");
+          if (!response.ok) {
+            throw new Error("Failed to fetch images");
+          }
+
+          const data = await response.json();
+
+          // Add each image to the gallery
+          if (data.images && data.images.length > 0) {
+            data.images.forEach((image) => {
+              // Determine confidence class
+              let confidenceClass = "medium-confidence";
+              if (image.confidenceRate > 0.95) {
+                confidenceClass = "high-confidence";
+              } else if (image.confidenceRate < 0.85) {
+                confidenceClass = "low-confidence";
+              }
+
+              const galleryItem = document.createElement("div");
+              galleryItem.className = "gallery-item";
+              galleryItem.innerHTML = `
+                <img 
+                  src="${image.thumbnailUrl}" 
+                  alt="${image.name}"
+                  class="gallery-image"
+                  onclick="showFullImage('${image.downloadUrl}')"
+                >
+                <div class="gallery-info">
+                  <h4>${image.name}</h4>
+                  <div class="gallery-metadata">
+                    <span>${image.date} ${image.time}</span>
+                    <span class="confidence-rate ${confidenceClass}">
+                      ${image.confidenceRate.toFixed(4)}
+                    </span>
+                  </div>
+                </div>
+              `;
+              galleryGrid.appendChild(galleryItem);
+            });
+          } else {
+            galleryGrid.innerHTML =
+              '<div class="empty-gallery">No defect images found</div>';
+          }
+        } catch (error) {
+          console.error("Error fetching defect images:", error);
+          galleryGrid.innerHTML =
+            '<div class="empty-gallery">Failed to load images</div>';
+        } finally {
+          loadingIndicator.style.display = "none";
+        }
+      }
+
+      // Force refresh images from OneDrive
+      async function refreshImages() {
+        const refreshButton = document.getElementById("refresh-button");
+
+        try {
+          // Show loading state
+          refreshButton.classList.add("loading");
+          refreshButton.disabled = true;
+
+          // First clear the server cache
+          const clearResponse = await fetch("/api/defect-images/refresh", {
+            method: "POST",
+          });
+
+          if (!clearResponse.ok) {
+            throw new Error("Failed to refresh image cache");
+          }
+
+          // Then fetch the images again
+          await fetchDefectImages();
+        } catch (error) {
+          console.error("Error refreshing images:", error);
+          alert("Failed to refresh images from OneDrive");
+        } finally {
+          // Reset button state
+          refreshButton.classList.remove("loading");
+          refreshButton.disabled = false;
+        }
+      }
+
+      // Show full-size image in modal
+      function showFullImage(imageUrl) {
+        const imageViewer = document.getElementById("image-viewer");
+        const fullImage = document.getElementById("full-image");
+
+        fullImage.src = imageUrl;
+        imageViewer.style.display = "flex";
+
+        // Prevent scrolling of the background
+        document.body.style.overflow = "hidden";
+      }
+
+      // Close image viewer
+      function closeImageViewer() {
+        const imageViewer = document.getElementById("image-viewer");
+        imageViewer.style.display = "none";
+
+        // Re-enable scrolling
+        document.body.style.overflow = "auto";
+      }
+
+      // Close viewer when clicking outside the image
+      document
+        .getElementById("image-viewer")
+        .addEventListener("click", function (event) {
+          if (event.target === this) {
+            closeImageViewer();
+          }
+        });
+    </script>
   </body>
-  </html>
+</html>

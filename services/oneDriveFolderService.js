@@ -31,8 +31,20 @@ class OneDriveFolderService {
       console.log(`Attempting to fetch images from: ${this.folderUrl}`);
       const response = await fetch(this.folderUrl);
       console.log(`Response status: ${response.status}`);
-      // Fetch the folder page HTML
+
+      // Check if the response is successful before proceeding
+      if (!response.ok) {
+        console.log(
+          `Failed to fetch from OneDrive, status: ${response.status}`
+        );
+        console.log("Falling back to local images");
+        return this.fallbackToLocalImages();
+      }
+
       const html = await response.text();
+
+      // Log a portion of the HTML for debugging
+      console.log("Response HTML preview:", html.substring(0, 200) + "...");
 
       // Use cheerio to parse the HTML and extract image links
       const $ = cheerio.load(html);
@@ -239,16 +251,16 @@ class OneDriveFolderService {
         name: "sample_defect_1.jpg",
         date: "15/5",
         time: "10:15",
-        confidenceRate: 0.9452,
-        url: "/images/defects/sample1.jpg", // Path to local image
+        confidenceRate: 0.9552,
+        url: "C:\\Projects\\tests\\water-bottle-visual-inspection-based-on-transfer-learning-main\\src\\inference\\high_confidence_defects\\defect_1.00_20250511_145243.jpg", // Path to local image
       },
       {
         id: "local2",
         name: "sample_defect_2.jpg",
         date: "15/5",
         time: "10:20",
-        confidenceRate: 0.8734,
-        url: "/images/defects/sample2.jpg",
+        confidenceRate: 0.9734,
+        url: "C:\\Projects\\tests\\water-bottle-visual-inspection-based-on-transfer-learning-main\\src\\inference\\high_confidence_defects\\defect_0.95_20250511_145004.jpg",
       },
       {
         id: "local3",
@@ -256,23 +268,63 @@ class OneDriveFolderService {
         date: "15/5",
         time: "10:25",
         confidenceRate: 0.9876,
-        url: "/images/defects/sample3.jpg",
+        url: "C:\\Projects\\tests\\water-bottle-visual-inspection-based-on-transfer-learning-main\\src\\inference\\high_confidence_defects\\defect_1.00_20250511_145243.jpg",
       },
       {
         id: "local4",
         name: "sample_defect_4.jpg",
         date: "15/5",
         time: "10:30",
-        confidenceRate: 0.9245,
-        url: "/images/defects/sample4.jpg",
+        confidenceRate: 0.9645,
+        url: "C:\\Projects\\tests\\water-bottle-visual-inspection-based-on-transfer-learning-main\\src\\inference\\high_confidence_defects\\defect_1.00_20250511_145243.jpg",
       },
       {
         id: "local5",
         name: "sample_defect_5.jpg",
         date: "15/5",
         time: "10:35",
-        confidenceRate: 0.8932,
-        url: "/images/defects/sample5.jpg",
+        confidenceRate: 0.9932,
+        url: "C:\\Projects\\tests\\water-bottle-visual-inspection-based-on-transfer-learning-main\\src\\inference\\high_confidence_defects\\defect_1.00_20250511_145243.jpg",
+      },
+      {
+        id: "local6",
+        name: "sample_defect_1.jpg",
+        date: "15/5",
+        time: "10:15",
+        confidenceRate: 0.9552,
+        url: "C:\\Projects\\tests\\water-bottle-visual-inspection-based-on-transfer-learning-main\\src\\inference\\high_confidence_defects\\defect_1.00_20250511_145243.jpg", // Path to local image
+      },
+      {
+        id: "local7",
+        name: "sample_defect_2.jpg",
+        date: "15/5",
+        time: "10:20",
+        confidenceRate: 0.9734,
+        url: "C:\\Projects\\tests\\water-bottle-visual-inspection-based-on-transfer-learning-main\\src\\inference\\high_confidence_defects\\defect_1.00_20250511_145243.jpg",
+      },
+      {
+        id: "local8",
+        name: "sample_defect_3.jpg",
+        date: "15/5",
+        time: "10:25",
+        confidenceRate: 0.9876,
+        url: "C:\\Projects\\tests\\water-bottle-visual-inspection-based-on-transfer-learning-main\\src\\inference\\high_confidence_defects\\defect_1.00_20250511_145243.jpg",
+      },
+      {
+        id: "local9",
+        name: "sample_defect_4.jpg",
+        date: "15/5",
+        time: "10:30",
+        confidenceRate: 0.9645,
+        url: "C:\\Projects\\tests\\water-bottle-visual-inspection-based-on-transfer-learning-main\\src\\inference\\high_confidence_defects\\defect_1.00_20250511_145243.jpg",
+      },
+      {
+        id: "local10",
+        name: "sample_defect_5.jpg",
+        date: "15/5",
+        time: "10:35",
+        confidenceRate: 0.9932,
+        url: "C:\\Projects\\tests\\water-bottle-visual-inspection-based-on-transfer-learning-main\\src\\inference\\high_confidence_defects\\defect_1.00_20250511_145243.jpg",
       },
     ];
   }
